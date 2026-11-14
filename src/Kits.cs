@@ -1,0 +1,129 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using BepInEx;
+
+namespace SpawnMenu
+{
+    internal sealed class Kit
+    {
+        public string Name;
+        public bool FillMags;
+        public readonly List<(string Key, int Count, int Line)> Items = new List<(string, int, int)>();
+    }
+
+    // Kits live in BepInEx\config\SpawnMenu.kits.txt so they can be edited without rebuilding.
+    // The file is re-read every time the menu opens.
+    internal static class Kits
+    {
+        internal static readonly List<Kit> List = new List<Kit>();
+        internal static string FilePath => Path.Combine(Paths.ConfigPath, "SpawnMenu.kits.txt");
+
+        const string Default =
+@"# Spawn Menu kits. Edit this file while the game runs; it is re-read each time the menu opens.
+#
+# [Kit name]              starts a kit
+# <item> <count>          one item per line. <item> is one of:
+#                           - the numeric item id         e.g.  1005 20
+#                           - mod:<modGuid> for mod items e.g.  mod:cfe0eb6a-4ba6-46f6-b7fc-0476d0a6cd2e 300
+#                           - the item's name in quotes    e.g.  ""Bandage"" 10
+# fillmags                load the kit's magazines from its ammo after spawning
+#
+# The menu's ""Save item list"" button writes every item's id and name to BepInEx\SpawnMenu.items.txt.
+# Anything after # is a comment.
+
+[Boltgun kit]
+mod:f5fc9e37-40ad-46b3-ad71-6be84c155ae4 1     # Boltgun
+mod:bac356ff-83fd-47f1-a864-1a33e3c7ba5c 1     # Bolt Pistol
+mod:8c0b9189-f401-48b1-8273-18bf8ed4f4ad 4     # Boltgun Magazine (30)
+mod:a9462c6d-1c5f-4cfe-b1d7-87bf808df939 4     # Bolt Pistol Magazine (10)
+mod:cfe0eb6a-4ba6-46f6-b7fc-0476d0a6cd2e 300   # .75 Bolt
+fillmags
+";
+
+        internal static void EnsureFile()
+        {
+            try
+            {
+                if (!File.Exists(FilePath))
+                {
+                    File.WriteAllText(FilePath, Default);
+                    SLog.Info($"Wrote the default kits to {FilePath}");
+                }
+            }
+            catch (Exception e) { SLog.Error("Couldn't write the kits file", e); }
+        }
+
+        internal static void Load()
+        {
+            List.Clear();
+            EnsureFile();
+            string[] lines;
+            try { lines = File.ReadAllLines(FilePath); }
+            catch (Exception e) { SLog.Error("Couldn't read the kits file", e); return; }
+
+            Kit cur = null;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string l = lines[i];
+                int hash = IndexOfComment(l);
+                if (hash >= 0) l = l.Substring(0, hash);
+                l = l.Trim();
+                if (l.Length == 0) continue;
+
+                if (l.StartsWith("[") && l.EndsWith("]"))
+                {
+                    cur = new Kit { Name = l.Substring(1, l.Length - 2).Trim() };
+                    List.Add(cur);
+                    continue;
+                }
+                if (cur == null) { SLog.Warn($"Kits line {i + 1}: '{l}' is outside a [Kit name] section, ignored"); continue; }
+                if (l.Equals("fillmags", StringComparison.OrdinalIgnoreCase)) { cur.FillMags = true; continue; }
+
+                string key = l; int count = 1;
+                int sp = l.LastIndexOfAny(new[] { ' ', '\t' });
+                if (sp > 0 && int.TryParse(l.Substring(sp + 1), out int c)) { key = l.Substring(0, sp).Trim(); count = c; }
+                if (key.Length >= 2 && key.StartsWith("\"") && key.EndsWith("\"")) key = key.Substring(1, key.Length - 2);
+                cur.Items.Add((key, Math.Max(1, count), i + 1));
+            }
+            SLog.Debug($"Loaded {List.Count} kit(s) from {FilePath}");
+        }
+
+        // '#' starts a comment unless it is inside quotes.
+        static int IndexOfComment(string l)
+        {
+            bool q = false;
+            for (int i = 0; i < l.Length; i++)
+            {
+                if (l[i] == '"') q = !q;
+                else if (l[i] == '#' && !q) return i;
+            }
+            return -1;
+        }
+
+        // Spawns a kit. Returns a short message for the menu's status line.
+        internal static string Give(Kit k)
+        {
+            var mags = new List<ItemData>();
+            int ok = 0;
+            var missing = new List<string>();
+            foreach (var (key, count, line) in k.Items)
+            {
+                var e = Catalog.Find(key);
+                if (e == null) { missing.Add(key); SLog.Warn($"Kit '{k.Name}' line {line}: no item '{key}' (mod not installed or wrong id?)"); continue; }
+                var made = new List<ItemData>();
+                if (Spawner.Give(e, count, made) > 0) ok++;
+                if (e.Type == ItemType.Magazine) mags.AddRange(made);
+            }
+            string msg = $"{k.Name}: spawned {ok} of {k.Items.Count} items";
+            if (k.FillMags && Plugin.FillMagazines.Value && mags.Count > 0)
+            {
+                int f = Spawner.FillMagazines(mags);
+                msg += $", loaded {f}/{mags.Count} magazines";
+            }
+            if (missing.Count > 0) msg += $". Missing: {string.Join(", ", missing)}";
+            SLog.Info(msg);
+            return msg;
+        }
+    }
+}
