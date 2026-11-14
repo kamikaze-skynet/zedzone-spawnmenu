@@ -2,6 +2,6 @@
     "name": "Spawn Menu",
     "version": "1.0.0",
     "author": "girthy_mods",
-    "description": "Testing tool: press F6 to spawn any item (game or mod) and one-click kits like the Boltgun kit.",
+    "description": "Testing tool: press Insert to spawn any item (game or mod) and one-click kits like the Boltgun kit.",
     "enabled": true
 }

@@ -23,7 +23,7 @@ namespace SpawnMenu
 
         public override void Load()
         {
-            MenuKey = Config.Bind("Keys", "MenuKey", KeyCode.F6,
+            MenuKey = Config.Bind("Keys", "OpenMenuKey", KeyCode.Insert,
                 "Opens and closes the spawn menu.");
             UiScale = Config.Bind("Display", "UiScale", 1f,
                 "Size of the menu. 1 = sized for the screen height, 1.25 = a quarter bigger.");

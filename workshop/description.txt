@@ -1,4 +1,4 @@
-A testing tool for ZED ZONE. Press F6 in game to open a spawn menu.
+A testing tool for ZED ZONE. Press Insert in game to open a spawn menu.
 
 - Every item the game has loaded, including items from other mods, in one searchable list. Type to search, use the tabs (Guns, Ammo, Gear, Food, Mods...) and pick an amount, then click an item to put it in your inventory. Whatever doesn't fit drops at your feet.
 - One-click kits. Kits are a text file (BepInEx/config/SpawnMenu.kits.txt) you can edit while the game runs. It comes with a Boltgun kit: rifle, pistol, magazines for both (loaded) and .75 ammo.

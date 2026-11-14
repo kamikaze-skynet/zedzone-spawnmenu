@@ -1,6 +1,6 @@
 # Spawn Menu (ZED ZONE)
 
-A BepInEx (IL2CPP) testing mod for ZED ZONE. Press **F6** in game to open a menu that spawns any item, plus one-click kits.
+A BepInEx (IL2CPP) testing mod for ZED ZONE. Press **Insert** in game to open a menu that spawns any item, plus one-click kits.
 
 ## Using it
 
@@ -11,7 +11,7 @@ A BepInEx (IL2CPP) testing mod for ZED ZONE. Press **F6** in game to open a menu
 - **Kits** (right side): one click spawns the whole kit.
 - **Fill my magazines**: loads every magazine you carry from the ammo you carry.
 - **Save item list**: writes every item's id, type, stack size, name and mod guid to `BepInEx\SpawnMenu.items.txt`.
-- **F6** or **Esc** closes the menu. While it is open the game ignores your clicks and keys.
+- **Insert** or **Esc** closes the menu. While it is open the game ignores your clicks and keys.
 
 ## Kits
 
@@ -31,7 +31,7 @@ Each line is `<item> <count>`, where `<item>` is a numeric item id, `mod:<modGui
 
 ## Settings
 
-`BepInEx\config\girthy_mods.zedzone.spawnmenu.cfg`: `MenuKey` (F6), `UiScale`, `ShowHiddenItems`, `MaxPerClick`, `FillMagazines`, `VerboseLog`.
+`BepInEx\config\girthy_mods.zedzone.spawnmenu.cfg`: `OpenMenuKey` (Insert), `UiScale`, `ShowHiddenItems`, `MaxPerClick`, `FillMagazines`, `VerboseLog`.
 
 Log: `BepInEx\SpawnMenu.log`.
 
