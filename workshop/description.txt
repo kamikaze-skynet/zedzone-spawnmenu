@@ -8,3 +8,5 @@ A testing tool for ZED ZONE. Press Insert in game to open a spawn menu.
 This is a cheat / testing mod. Use it in your own worlds.
 
 Needs BepInEx (IL2CPP). Settings in BepInEx/config/girthy_mods.zedzone.spawnmenu.cfg (menu key, size, hidden items).
+
+[b]Settings and keys:[/b] Press [b]F11[/b] in game to open [b]Mod Menu[/b] (Steam installs it with this mod). There you can rebind this mod's keys (menu key Insert) and change its settings without editing files.
