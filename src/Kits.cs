@@ -9,6 +9,7 @@ namespace SpawnMenu
     {
         public string Name;
         public bool FillMags;
+        public bool Helicopter;
         public readonly List<(string Key, int Count, int Line)> Items = new List<(string, int, int)>();
     }
 
@@ -28,6 +29,7 @@ namespace SpawnMenu
 #                           - mod:<modGuid> for mod items e.g.  mod:cfe0eb6a-4ba6-46f6-b7fc-0476d0a6cd2e 300
 #                           - the item's name in quotes    e.g.  ""Bandage"" 10
 # fillmags                load the kit's magazines from its ammo after spawning
+# helicopter              call in a helicopter (needs the Helicopter mod)
 #
 # The menu's ""Save item list"" button writes every item's id and name to BepInEx\SpawnMenu.items.txt.
 # Anything after # is a comment.
@@ -43,6 +45,11 @@ fillmags
 [Laser Gun kit]
 mod:93b81951-6391-4707-beb4-0ea971889dc7 1     # Laser Rifle
 mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
+
+[Helicopter kit]
+helicopter                                     # calls a helicopter in front of you (Helicopter mod)
+102 500                                        # 5.56mm rounds for the door gun
+104 500                                        # 7.62x39mm rounds for the door gun
 ";
 
         // Kits added in later versions: appended to an existing kits file once if it has no kit by that name.
@@ -52,6 +59,12 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
 [Laser Gun kit]
 mod:93b81951-6391-4707-beb4-0ea971889dc7 1     # Laser Rifle
 mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
+"),
+            ("Helicopter kit", @"
+[Helicopter kit]
+helicopter                                     # calls a helicopter in front of you (Helicopter mod)
+102 500                                        # 5.56mm rounds for the door gun
+104 500                                        # 7.62x39mm rounds for the door gun
 "),
         };
 
@@ -103,6 +116,7 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
                 }
                 if (cur == null) { SLog.Warn($"Kits line {i + 1}: '{l}' is outside a [Kit name] section, ignored"); continue; }
                 if (l.Equals("fillmags", StringComparison.OrdinalIgnoreCase)) { cur.FillMags = true; continue; }
+                if (l.Equals("helicopter", StringComparison.OrdinalIgnoreCase)) { cur.Helicopter = true; continue; }
 
                 string key = l; int count = 1;
                 int sp = l.LastIndexOfAny(new[] { ' ', '\t' });
@@ -111,6 +125,32 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
                 cur.Items.Add((key, Math.Max(1, count), i + 1));
             }
             SLog.Debug($"Loaded {List.Count} kit(s) from {FilePath}");
+        }
+
+        // The Helicopter mod (girthy_mods.zedzone.helicopter) has a public
+        // ZedHelicopter.HeliApi.CallIn(bool ignoreLimit). Found by reflection so Spawn Menu
+        // doesn't need the Helicopter mod to load.
+        static string CallHelicopter()
+        {
+            try
+            {
+                Type t = null;
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    t = asm.GetType("ZedHelicopter.HeliApi", false);
+                    if (t != null) break;
+                }
+                if (t == null) return "No helicopter: the Helicopter mod isn't installed";
+                var m = t.GetMethod("CallIn", new[] { typeof(bool) });
+                if (m == null) return "No helicopter: the Helicopter mod is too old";
+                string r = m.Invoke(null, new object[] { true }) as string ?? "";
+                return r.StartsWith("!") ? "No helicopter: " + r.Substring(1) : r;
+            }
+            catch (Exception e)
+            {
+                SLog.Error("Calling the Helicopter mod failed", e);
+                return "No helicopter: " + e.GetBaseException().Message;
+            }
         }
 
         // '#' starts a comment unless it is inside quotes.
@@ -140,6 +180,7 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
                 if (e.Type == ItemType.Magazine) mags.AddRange(made);
             }
             string msg = $"{k.Name}: spawned {ok} of {k.Items.Count} items";
+            if (k.Helicopter) msg += ". " + CallHelicopter();
             if (k.FillMags && Plugin.FillMagazines.Value && mags.Count > 0)
             {
                 int f = Spawner.FillMagazines(mags);
