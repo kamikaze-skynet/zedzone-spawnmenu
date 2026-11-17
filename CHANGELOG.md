@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1
+- Helicopter kit now includes 2 full cans of gasoline (new kit line `gascans <n>`, needs the current Helicopter mod). Added to an existing Helicopter kit automatically, once.
+
 ## 1.2.0
 - New Helicopter kit: calls in a helicopter from the Helicopter mod (skipping its one-per-save limit) plus 500 rounds each of 5.56mm and 7.62x39mm for its door gun. Added to an existing kits file automatically, once.
 - New kit line `helicopter` that calls in a helicopter (needs the Helicopter mod).

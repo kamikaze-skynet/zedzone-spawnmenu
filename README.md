@@ -32,13 +32,14 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
 
 [Helicopter kit]
 helicopter                                     # calls a helicopter in front of you (Helicopter mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Home next to it to refuel)
 102 500                                        # 5.56mm rounds for the door gun
 104 500                                        # 7.62x39mm rounds for the door gun
 ```
 
 Kits added in a later version are appended to an existing kits file once (delete one and add a `# removed: <Kit name>` line to keep it gone).
 
-Each line is `<item> <count>`, where `<item>` is a numeric item id, `mod:<modGuid>` for a mod's item, or the item's name in quotes. `fillmags` loads the kit's magazines from its ammo after spawning. `helicopter` calls in a helicopter from the Helicopter mod, ignoring its one-per-save limit. A kit item that isn't installed is skipped and named in the status line.
+Each line is `<item> <count>`, where `<item>` is a numeric item id, `mod:<modGuid>` for a mod's item, or the item's name in quotes. `fillmags` loads the kit's magazines from its ammo after spawning. `helicopter` calls in a helicopter from the Helicopter mod, ignoring its one-per-save limit. `gascans <n>` gives n full cans of gasoline for it. A kit item that isn't installed is skipped and named in the status line.
 
 ## Settings
 
