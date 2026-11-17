@@ -39,7 +39,21 @@ mod:8c0b9189-f401-48b1-8273-18bf8ed4f4ad 4     # Boltgun Magazine (30)
 mod:a9462c6d-1c5f-4cfe-b1d7-87bf808df939 4     # Bolt Pistol Magazine (10)
 mod:cfe0eb6a-4ba6-46f6-b7fc-0476d0a6cd2e 300   # .75 Bolt
 fillmags
+
+[Laser Gun kit]
+mod:93b81951-6391-4707-beb4-0ea971889dc7 1     # Laser Rifle
+mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
 ";
+
+        // Kits added in later versions: appended to an existing kits file once if it has no kit by that name.
+        static readonly (string Name, string Text)[] Added =
+        {
+            ("Laser Gun kit", @"
+[Laser Gun kit]
+mod:93b81951-6391-4707-beb4-0ea971889dc7 1     # Laser Rifle
+mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
+"),
+        };
 
         internal static void EnsureFile()
         {
@@ -49,6 +63,16 @@ fillmags
                 {
                     File.WriteAllText(FilePath, Default);
                     SLog.Info($"Wrote the default kits to {FilePath}");
+                    return;
+                }
+                string text = File.ReadAllText(FilePath);
+                foreach (var (name, kit) in Added)
+                {
+                    if (text.IndexOf("[" + name + "]", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                    if (text.IndexOf("# removed: " + name, StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                    File.AppendAllText(FilePath, kit);
+                    text += kit;
+                    SLog.Info($"Added the '{name}' kit to {FilePath}");
                 }
             }
             catch (Exception e) { SLog.Error("Couldn't write the kits file", e); }

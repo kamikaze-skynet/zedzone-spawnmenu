@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.0
+- New Laser Gun kit (Laser Rifle + 4 Laser Battery Packs). It is added to an existing kits file automatically, once.
+
 ## 1.0.0
 - First version. Insert opens a menu that lists every item the game has loaded (its own and every mod's), with search, category tabs and an amount picker. Click an item to spawn it into your inventory (anything that doesn't fit drops at your feet).
 - Kits from `BepInEx\config\SpawnMenu.kits.txt`, spawned with one click. Ships with a Boltgun kit (rifle, pistol, 4 magazines each, 300 rounds of .75, magazines loaded).
