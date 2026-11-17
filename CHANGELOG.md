@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+- New Tank kit: puts a tank from the Tank mod in front of you (skipping its one-per-save limit), plus 2 full gas cans, 20 of the game's recoilless rockets for the main gun and 500 rounds of 7.62x39mm for the roof machine gun. Added to an existing kits file automatically, once.
+- New kit lines `tank` and `rockets <n>` (need the Tank mod). `gascans <n>` now also works with only the Tank mod installed.
+
 ## 1.2.1
 - Helicopter kit now includes 2 full cans of gasoline (new kit line `gascans <n>`, needs the current Helicopter mod). Added to an existing Helicopter kit automatically, once.
 
