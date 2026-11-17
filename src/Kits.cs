@@ -10,6 +10,7 @@ namespace SpawnMenu
         public string Name;
         public bool FillMags;
         public bool Helicopter;
+        public int GasCans;
         public readonly List<(string Key, int Count, int Line)> Items = new List<(string, int, int)>();
     }
 
@@ -30,6 +31,7 @@ namespace SpawnMenu
 #                           - the item's name in quotes    e.g.  ""Bandage"" 10
 # fillmags                load the kit's magazines from its ammo after spawning
 # helicopter              call in a helicopter (needs the Helicopter mod)
+# gascans <n>             n full cans of gasoline, the helicopter's fuel (needs the Helicopter mod)
 #
 # The menu's ""Save item list"" button writes every item's id and name to BepInEx\SpawnMenu.items.txt.
 # Anything after # is a comment.
@@ -48,6 +50,7 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
 
 [Helicopter kit]
 helicopter                                     # calls a helicopter in front of you (Helicopter mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Home next to it to refuel)
 102 500                                        # 5.56mm rounds for the door gun
 104 500                                        # 7.62x39mm rounds for the door gun
 ";
@@ -63,6 +66,7 @@ mod:cef9bff0-579f-401b-a5a2-890dc6fd3ec8 4     # Laser Battery Pack
             ("Helicopter kit", @"
 [Helicopter kit]
 helicopter                                     # calls a helicopter in front of you (Helicopter mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Home next to it to refuel)
 102 500                                        # 5.56mm rounds for the door gun
 104 500                                        # 7.62x39mm rounds for the door gun
 "),
@@ -79,6 +83,18 @@ helicopter                                     # calls a helicopter in front of 
                     return;
                 }
                 string text = File.ReadAllText(FilePath);
+                // 1.2.1: the Helicopter kit from 1.2.0 had no fuel; add it once.
+                if (text.IndexOf("[Helicopter kit]", StringComparison.OrdinalIgnoreCase) >= 0
+                    && text.IndexOf("gascans", StringComparison.OrdinalIgnoreCase) < 0
+                    && text.IndexOf("# removed: gascans", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    int at = text.IndexOf("[Helicopter kit]", StringComparison.OrdinalIgnoreCase);
+                    int eol = text.IndexOf('\n', at);
+                    string add = "gascans 2                                      # 2 full cans of gasoline (Shift+Home next to it to refuel)" + Environment.NewLine;
+                    text = eol < 0 ? text + Environment.NewLine + add : text.Insert(eol + 1, add);
+                    File.WriteAllText(FilePath, text);
+                    SLog.Info($"Added gasoline cans to the Helicopter kit in {FilePath}");
+                }
                 foreach (var (name, kit) in Added)
                 {
                     if (text.IndexOf("[" + name + "]", StringComparison.OrdinalIgnoreCase) >= 0) continue;
@@ -117,6 +133,12 @@ helicopter                                     # calls a helicopter in front of 
                 if (cur == null) { SLog.Warn($"Kits line {i + 1}: '{l}' is outside a [Kit name] section, ignored"); continue; }
                 if (l.Equals("fillmags", StringComparison.OrdinalIgnoreCase)) { cur.FillMags = true; continue; }
                 if (l.Equals("helicopter", StringComparison.OrdinalIgnoreCase)) { cur.Helicopter = true; continue; }
+                if (l.StartsWith("gascans", StringComparison.OrdinalIgnoreCase))
+                {
+                    string rest = l.Substring(7).Trim();
+                    cur.GasCans = rest.Length == 0 ? 1 : (int.TryParse(rest, out int g) ? Math.Max(0, g) : 1);
+                    continue;
+                }
 
                 string key = l; int count = 1;
                 int sp = l.LastIndexOfAny(new[] { ' ', '\t' });
@@ -130,7 +152,7 @@ helicopter                                     # calls a helicopter in front of 
         // The Helicopter mod (girthy_mods.zedzone.helicopter) has a public
         // ZedHelicopter.HeliApi.CallIn(bool ignoreLimit). Found by reflection so Spawn Menu
         // doesn't need the Helicopter mod to load.
-        static string CallHelicopter()
+        static string CallHelicopter(string method, object arg)
         {
             try
             {
@@ -141,10 +163,10 @@ helicopter                                     # calls a helicopter in front of 
                     if (t != null) break;
                 }
                 if (t == null) return "No helicopter: the Helicopter mod isn't installed";
-                var m = t.GetMethod("CallIn", new[] { typeof(bool) });
-                if (m == null) return "No helicopter: the Helicopter mod is too old";
-                string r = m.Invoke(null, new object[] { true }) as string ?? "";
-                return r.StartsWith("!") ? "No helicopter: " + r.Substring(1) : r;
+                var m = t.GetMethod(method, new[] { arg.GetType() });
+                if (m == null) return "Helicopter mod is too old for '" + method + "' (update it)";
+                string r = m.Invoke(null, new object[] { arg }) as string ?? "";
+                return r.StartsWith("!") ? r.Substring(1) : r;
             }
             catch (Exception e)
             {
@@ -180,7 +202,8 @@ helicopter                                     # calls a helicopter in front of 
                 if (e.Type == ItemType.Magazine) mags.AddRange(made);
             }
             string msg = $"{k.Name}: spawned {ok} of {k.Items.Count} items";
-            if (k.Helicopter) msg += ". " + CallHelicopter();
+            if (k.Helicopter) msg += ". " + CallHelicopter("CallIn", true);
+            if (k.GasCans > 0) msg += ". " + CallHelicopter("GiveFuelCans", k.GasCans);
             if (k.FillMags && Plugin.FillMagazines.Value && mags.Count > 0)
             {
                 int f = Spawner.FillMagazines(mags);
