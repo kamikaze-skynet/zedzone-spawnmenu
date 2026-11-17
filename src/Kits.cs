@@ -10,6 +10,8 @@ namespace SpawnMenu
         public string Name;
         public bool FillMags;
         public bool Helicopter;
+        public bool Tank;
+        public int Rockets;
         public int GasCans;
         public readonly List<(string Key, int Count, int Line)> Items = new List<(string, int, int)>();
     }
@@ -31,7 +33,9 @@ namespace SpawnMenu
 #                           - the item's name in quotes    e.g.  ""Bandage"" 10
 # fillmags                load the kit's magazines from its ammo after spawning
 # helicopter              call in a helicopter (needs the Helicopter mod)
-# gascans <n>             n full cans of gasoline, the helicopter's fuel (needs the Helicopter mod)
+# gascans <n>             n full cans of gasoline (needs the Helicopter or Tank mod)
+# tank                    put a tank in front of you (needs the Tank mod)
+# rockets <n>             n of the game's recoilless rockets, the tank's main gun ammo (needs the Tank mod)
 #
 # The menu's ""Save item list"" button writes every item's id and name to BepInEx\SpawnMenu.items.txt.
 # Anything after # is a comment.
@@ -53,6 +57,12 @@ helicopter                                     # calls a helicopter in front of 
 gascans 2                                      # 2 full cans of gasoline (Shift+Home next to it to refuel)
 102 500                                        # 5.56mm rounds for the door gun
 104 500                                        # 7.62x39mm rounds for the door gun
+
+[Tank kit]
+tank                                           # puts a tank in front of you (Tank mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
+rockets 20                                     # main gun ammo: the game's recoilless rockets
+104 500                                        # 7.62x39mm rounds for the roof machine gun
 ";
 
         // Kits added in later versions: appended to an existing kits file once if it has no kit by that name.
@@ -69,6 +79,13 @@ helicopter                                     # calls a helicopter in front of 
 gascans 2                                      # 2 full cans of gasoline (Shift+Home next to it to refuel)
 102 500                                        # 5.56mm rounds for the door gun
 104 500                                        # 7.62x39mm rounds for the door gun
+"),
+            ("Tank kit", @"
+[Tank kit]
+tank                                           # puts a tank in front of you (Tank mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
+rockets 20                                     # main gun ammo: the game's recoilless rockets
+104 500                                        # 7.62x39mm rounds for the roof machine gun
 "),
         };
 
@@ -133,6 +150,13 @@ gascans 2                                      # 2 full cans of gasoline (Shift+
                 if (cur == null) { SLog.Warn($"Kits line {i + 1}: '{l}' is outside a [Kit name] section, ignored"); continue; }
                 if (l.Equals("fillmags", StringComparison.OrdinalIgnoreCase)) { cur.FillMags = true; continue; }
                 if (l.Equals("helicopter", StringComparison.OrdinalIgnoreCase)) { cur.Helicopter = true; continue; }
+                if (l.Equals("tank", StringComparison.OrdinalIgnoreCase)) { cur.Tank = true; continue; }
+                if (l.StartsWith("rockets", StringComparison.OrdinalIgnoreCase) && (l.Length == 7 || char.IsWhiteSpace(l[7])))
+                {
+                    string rest = l.Substring(7).Trim();
+                    cur.Rockets = rest.Length == 0 ? 1 : (int.TryParse(rest, out int rk) ? Math.Max(0, rk) : 1);
+                    continue;
+                }
                 if (l.StartsWith("gascans", StringComparison.OrdinalIgnoreCase))
                 {
                     string rest = l.Substring(7).Trim();
@@ -152,27 +176,51 @@ gascans 2                                      # 2 full cans of gasoline (Shift+
         // The Helicopter mod (girthy_mods.zedzone.helicopter) has a public
         // ZedHelicopter.HeliApi.CallIn(bool ignoreLimit). Found by reflection so Spawn Menu
         // doesn't need the Helicopter mod to load.
-        static string CallHelicopter(string method, object arg)
+        static string CallHelicopter(string method, object arg) => CallMod("ZedHelicopter.HeliApi", "Helicopter", method, arg);
+
+        // The Tank mod (girthy_mods.zedzone.tank) has a public ZedTank.TankApi, found the same way.
+        static string CallTank(string method, object arg) => CallMod("ZedTank.TankApi", "Tank", method, arg);
+
+        static Type FindType(string name)
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var t = asm.GetType(name, false);
+                if (t != null) return t;
+            }
+            return null;
+        }
+
+        static string CallMod(string typeName, string mod, string method, object arg)
         {
             try
             {
-                Type t = null;
-                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    t = asm.GetType("ZedHelicopter.HeliApi", false);
-                    if (t != null) break;
-                }
-                if (t == null) return "No helicopter: the Helicopter mod isn't installed";
+                Type t = FindType(typeName);
+                if (t == null) return $"No {mod.ToLowerInvariant()}: the {mod} mod isn't installed";
                 var m = t.GetMethod(method, new[] { arg.GetType() });
-                if (m == null) return "Helicopter mod is too old for '" + method + "' (update it)";
+                if (m == null) return $"{mod} mod is too old for '{method}' (update it)";
                 string r = m.Invoke(null, new object[] { arg }) as string ?? "";
                 return r.StartsWith("!") ? r.Substring(1) : r;
             }
             catch (Exception e)
             {
-                SLog.Error("Calling the Helicopter mod failed", e);
-                return "No helicopter: " + e.GetBaseException().Message;
+                SLog.Error($"Calling the {mod} mod failed", e);
+                return $"No {mod.ToLowerInvariant()}: " + e.GetBaseException().Message;
             }
+        }
+
+        // The tank's main gun fires the game's recoilless rockets; the Tank mod knows their item id.
+        static string GiveRockets(int count)
+        {
+            Type t = FindType("ZedTank.TankApi");
+            if (t == null) return "No rockets: the Tank mod isn't installed";
+            int id = -1;
+            try { id = (int)t.GetMethod("RocketItemId").Invoke(null, null); }
+            catch (Exception e) { SLog.Error("Asking the Tank mod for the rocket id failed", e); }
+            if (id < 0) return "No rockets: the Tank mod found no recoilless rockets in this game";
+            var e2 = Catalog.Find(id.ToString());
+            if (e2 == null) return $"No rockets: item {id} isn't in the item list";
+            return Spawner.Give(e2, count, new List<ItemData>()) > 0 ? $"{count} rockets" : "No rockets: spawning failed";
         }
 
         // '#' starts a comment unless it is inside quotes.
@@ -203,7 +251,10 @@ gascans 2                                      # 2 full cans of gasoline (Shift+
             }
             string msg = $"{k.Name}: spawned {ok} of {k.Items.Count} items";
             if (k.Helicopter) msg += ". " + CallHelicopter("CallIn", true);
-            if (k.GasCans > 0) msg += ". " + CallHelicopter("GiveFuelCans", k.GasCans);
+            if (k.Tank) msg += ". " + CallTank("CallIn", true);
+            if (k.GasCans > 0) msg += ". " + (FindType("ZedHelicopter.HeliApi") != null || FindType("ZedTank.TankApi") == null
+                ? CallHelicopter("GiveFuelCans", k.GasCans) : CallTank("GiveFuelCans", k.GasCans));
+            if (k.Rockets > 0) msg += ". " + GiveRockets(k.Rockets);
             if (k.FillMags && Plugin.FillMagazines.Value && mags.Count > 0)
             {
                 int f = Spawner.FillMagazines(mags);
