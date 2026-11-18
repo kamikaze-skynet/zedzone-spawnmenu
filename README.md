@@ -2,6 +2,11 @@
 
 A BepInEx (IL2CPP) testing mod for ZED ZONE. Press **Insert** in game to open a menu that spawns any item, plus one-click kits.
 
+## Requires
+
+- ZED ZONE (Windows, Steam)
+- [ZED ZONE Code Mod Loader](https://steamcommunity.com/sharedfiles/filedetails/?id=3834614258) - run its install.cmd once, then start the game through Steam.
+
 ## Using it
 
 - **Search**: just type. Backspace deletes, Ctrl+Backspace clears.
