@@ -1,6 +1,6 @@
 {
     "name": "Spawn Menu",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "author": "girthy_mods",
     "description": "Testing tool: press Insert to spawn any item (game or mod) and one-click kits like the Boltgun kit.",
     "enabled": true
