@@ -41,11 +41,17 @@ tank                                           # puts a tank in front of you (Ta
 gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
 rockets 20                                     # main gun ammo: the game's recoilless rockets
 104 500                                        # 7.62x39mm rounds for the roof machine gun
+
+[Battle Tank kit]
+battletank                                     # puts a Battle Tank (3D Desert Sentinel) in front of you (Tank mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
+rockets 20                                     # main gun ammo
+104 500                                        # 7.62x39mm rounds for the roof machine gun
 ```
 
 Kits added in a later version are appended to an existing kits file once (delete one and add a `# removed: <Kit name>` line to keep it gone).
 
-Each line is `<item> <count>`, where `<item>` is a numeric item id, `mod:<modGuid>` for a mod's item, or the item's name in quotes. `fillmags` loads the kit's magazines from its ammo after spawning. `helicopter` calls in a helicopter from the Helicopter mod, ignoring its one-per-save limit. `gascans <n>` gives n full cans of gasoline (Helicopter or Tank mod). `tank` puts a tank from the Tank mod in front of you, ignoring its one-per-save limit, and `rockets <n>` gives n of the game's recoilless rockets for its main gun. A kit item that isn't installed is skipped and named in the status line.
+Each line is `<item> <count>`, where `<item>` is a numeric item id, `mod:<modGuid>` for a mod's item, or the item's name in quotes. `fillmags` loads the kit's magazines from its ammo after spawning. `helicopter` calls in a helicopter from the Helicopter mod, ignoring its one-per-save limit. `gascans <n>` gives n full cans of gasoline (Helicopter or Tank mod). `tank` puts the classic tank from the Tank mod in front of you and `battletank` puts its 3D Battle Tank there, both ignoring the one-per-save limit, and `rockets <n>` gives n of the game's recoilless rockets for its main gun. A kit item that isn't installed is skipped and named in the status line.
 
 ## Settings
 

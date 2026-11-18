@@ -11,6 +11,7 @@ namespace SpawnMenu
         public bool FillMags;
         public bool Helicopter;
         public bool Tank;
+        public bool BattleTank;
         public int Rockets;
         public int GasCans;
         public readonly List<(string Key, int Count, int Line)> Items = new List<(string, int, int)>();
@@ -35,6 +36,7 @@ namespace SpawnMenu
 # helicopter              call in a helicopter (needs the Helicopter mod)
 # gascans <n>             n full cans of gasoline (needs the Helicopter or Tank mod)
 # tank                    put a tank in front of you (needs the Tank mod)
+# battletank              put a Battle Tank (the 3D Desert Sentinel) in front of you (needs Tank 1.3.0 or newer)
 # rockets <n>             n of the game's recoilless rockets, the tank's main gun ammo (needs the Tank mod)
 #
 # The menu's ""Save item list"" button writes every item's id and name to BepInEx\SpawnMenu.items.txt.
@@ -63,6 +65,12 @@ tank                                           # puts a tank in front of you (Ta
 gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
 rockets 20                                     # main gun ammo: the game's recoilless rockets
 104 500                                        # 7.62x39mm rounds for the roof machine gun
+
+[Battle Tank kit]
+battletank                                     # puts a Battle Tank (3D Desert Sentinel) in front of you (Tank mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
+rockets 20                                     # main gun ammo
+104 500                                        # 7.62x39mm rounds for the roof machine gun
 ";
 
         // Kits added in later versions: appended to an existing kits file once if it has no kit by that name.
@@ -85,6 +93,13 @@ gascans 2                                      # 2 full cans of gasoline (Shift+
 tank                                           # puts a tank in front of you (Tank mod)
 gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
 rockets 20                                     # main gun ammo: the game's recoilless rockets
+104 500                                        # 7.62x39mm rounds for the roof machine gun
+"),
+            ("Battle Tank kit", @"
+[Battle Tank kit]
+battletank                                     # puts a Battle Tank (3D Desert Sentinel) in front of you (Tank mod)
+gascans 2                                      # 2 full cans of gasoline (Shift+Page Up next to it to refuel)
+rockets 20                                     # main gun ammo
 104 500                                        # 7.62x39mm rounds for the roof machine gun
 "),
         };
@@ -151,6 +166,7 @@ rockets 20                                     # main gun ammo: the game's recoi
                 if (l.Equals("fillmags", StringComparison.OrdinalIgnoreCase)) { cur.FillMags = true; continue; }
                 if (l.Equals("helicopter", StringComparison.OrdinalIgnoreCase)) { cur.Helicopter = true; continue; }
                 if (l.Equals("tank", StringComparison.OrdinalIgnoreCase)) { cur.Tank = true; continue; }
+                if (l.Equals("battletank", StringComparison.OrdinalIgnoreCase)) { cur.BattleTank = true; continue; }
                 if (l.StartsWith("rockets", StringComparison.OrdinalIgnoreCase) && (l.Length == 7 || char.IsWhiteSpace(l[7])))
                 {
                     string rest = l.Substring(7).Trim();
@@ -252,6 +268,7 @@ rockets 20                                     # main gun ammo: the game's recoi
             string msg = $"{k.Name}: spawned {ok} of {k.Items.Count} items";
             if (k.Helicopter) msg += ". " + CallHelicopter("CallIn", true);
             if (k.Tank) msg += ". " + CallTank("CallIn", true);
+            if (k.BattleTank) msg += ". " + CallTank("CallInBattleTank", true);
             if (k.GasCans > 0) msg += ". " + (FindType("ZedHelicopter.HeliApi") != null || FindType("ZedTank.TankApi") == null
                 ? CallHelicopter("GiveFuelCans", k.GasCans) : CallTank("GiveFuelCans", k.GasCans));
             if (k.Rockets > 0) msg += ". " + GiveRockets(k.Rockets);

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+- New Battle Tank kit: puts the Tank mod's 3D Battle Tank (the Desert Sentinel) in front of you, plus 2 full gas cans, 20 main gun rounds and 500 rounds of 7.62x39mm for the roof machine gun. The Tank kit still gives the classic tank, so both are in the menu. Added to an existing kits file automatically, once.
+- New kit line `battletank` (needs Tank 1.3.0 or newer).
+
 ## 1.3.0
 - New Tank kit: puts a tank from the Tank mod in front of you (skipping its one-per-save limit), plus 2 full gas cans, 20 of the game's recoilless rockets for the main gun and 500 rounds of 7.62x39mm for the roof machine gun. Added to an existing kits file automatically, once.
 - New kit lines `tank` and `rockets <n>` (need the Tank mod). `gascans <n>` now also works with only the Tank mod installed.
