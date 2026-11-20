@@ -221,7 +221,10 @@ rockets 20                                     # main gun ammo
             catch (Exception e)
             {
                 SLog.Error($"Calling the {mod} mod failed", e);
-                return $"No {mod.ToLowerInvariant()}: " + e.GetBaseException().Message;
+                var b = e.GetBaseException();
+                if (b is MissingMethodException || b is MissingFieldException || b is TypeLoadException)
+                    return $"No {mod.ToLowerInvariant()}: the {mod} mod was built for an older version of the game. Update or rebuild it ({b.Message})";
+                return $"No {mod.ToLowerInvariant()}: " + b.Message;
             }
         }
 

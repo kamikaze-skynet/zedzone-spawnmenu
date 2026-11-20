@@ -12,7 +12,7 @@ namespace SpawnMenu
     public class Plugin : BasePlugin
     {
         public const string Guid = "girthy_mods.zedzone.spawnmenu";
-        public const string Version = "1.4.1";
+        public const string Version = "1.4.2";
 
         internal static ConfigEntry<KeyCode> MenuKey;
         internal static ConfigEntry<float> UiScale;

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.2
+- When the Tank or Helicopter mod was built for an older version of the game (as happened after the game update of 2026-11-19), the kit now says so plainly instead of showing a "Method not found" error. The fix for that is updating the Tank / Helicopter mod, not Spawn Menu.
+
 ## 1.4.1
 - Fix: Iron Plates and about 300 other normal items were missing from the list. The game flags them as "hidden" (it uses that flag for things that don't show up in loot, not for broken items), and the menu skipped every flagged item. They're all listed now. The setting is now `ListGameHiddenItems` (on).
 - The list also picks up items the game has registered by id but left out of its main item list.
