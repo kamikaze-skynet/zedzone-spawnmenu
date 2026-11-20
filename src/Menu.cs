@@ -232,7 +232,7 @@ namespace SpawnMenu
                     else if (row.Contains(m)) GUI.Box(row, "");
                     string stack = e.Stack > 1 ? $"  (stack {e.Stack})" : "";
                     string mod = e.ModGuid.Length > 0 ? "  <color=#7fd4ff>[mod]</color>" : "";
-                    string hid = e.Hidden ? "  <color=#ff9f7f>[hidden]</color>" : "";
+                    string hid = "";
                     GUI.Label(Inset(row), $"<color=#aaaaaa>{Catalog.TypeLabel(e.Type),-9}</color>  {e.Name}{stack}{mod}{hid}");
                     skin.label.alignment = TextAnchor.MiddleRight;
                     GUI.Label(Inset(row), $"<color=#888888>#{e.Id}</color>");

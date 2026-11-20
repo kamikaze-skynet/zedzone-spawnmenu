@@ -12,7 +12,7 @@ namespace SpawnMenu
     public class Plugin : BasePlugin
     {
         public const string Guid = "girthy_mods.zedzone.spawnmenu";
-        public const string Version = "1.4.0";
+        public const string Version = "1.4.1";
 
         internal static ConfigEntry<KeyCode> MenuKey;
         internal static ConfigEntry<float> UiScale;
@@ -27,8 +27,8 @@ namespace SpawnMenu
                 "Opens and closes the spawn menu.");
             UiScale = Config.Bind("Display", "UiScale", 1f,
                 "Size of the menu. 1 = sized for the screen height, 1.25 = a quarter bigger.");
-            ShowHiddenItems = Config.Bind("Items", "ShowHiddenItems", false,
-                "Also list items the game marks as hidden (internal / unfinished items). They may not work properly.");
+            ShowHiddenItems = Config.Bind("Items", "ListGameHiddenItems", true,
+                "List items the game flags as hidden. The game flags about 300 normal items this way (Iron Plates among them), so leave this on unless the list has items you never want to see.");
             FillMagazines = Config.Bind("Kits", "FillMagazines", true,
                 "Kits with a 'fillmags' line load their magazines from the ammo in the kit.");
             MaxPerClick = Config.Bind("Items", "MaxPerClick", 100,

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+- Fix: Iron Plates and about 300 other normal items were missing from the list. The game flags them as "hidden" (it uses that flag for things that don't show up in loot, not for broken items), and the menu skipped every flagged item. They're all listed now. The setting is now `ListGameHiddenItems` (on).
+- The list also picks up items the game has registered by id but left out of its main item list.
+
 ## 1.4.0
 - New Battle Tank kit: puts the Tank mod's 3D Battle Tank (the Desert Sentinel) in front of you, plus 2 full gas cans, 20 main gun rounds and 500 rounds of 7.62x39mm for the roof machine gun. The Tank kit still gives the classic tank, so both are in the menu. Added to an existing kits file automatically, once.
 - New kit line `battletank` (needs Tank 1.3.0 or newer).

@@ -37,27 +37,19 @@ namespace SpawnMenu
             if (!force && count == _builtFrom && ver == _builtVersion) return;
 
             All.Clear();
-            foreach (var a in im.itemList)
+            var seen = new HashSet<int>();
+            foreach (var a in im.itemList) Add(a, seen);
+            // itemList can miss items that are registered by id (some mod items, items added after
+            // the list was built), so also walk the id lookup the game spawns from.
+            int fromDic = 0;
+            try
             {
-                if (a == null) continue;
-                try
-                {
-                    if (a.isMissingMod) continue;
-                    var e = new Entry
-                    {
-                        Attr = a,
-                        Id = a.itemId,
-                        Name = NameOf(a),
-                        Type = a.itemType,
-                        ModGuid = a.modGuid ?? "",
-                        Stack = Math.Max(1, a.stackNumber),
-                        Hidden = a.hiddenItem,
-                    };
-                    e.Lower = e.Name.ToLowerInvariant();
-                    All.Add(e);
-                }
-                catch (Exception ex) { SLog.Debug($"Skipped an item while listing: {ex.Message}"); }
+                if (im.itemAttrDic != null)
+                    foreach (var kv in im.itemAttrDic)
+                        if (Add(kv.Value, seen)) fromDic++;
             }
+            catch (Exception ex) { SLog.Debug($"Couldn't read itemAttrDic: {ex.Message}"); }
+            if (fromDic > 0) SLog.Info($"Item list: {fromDic} items were only in the id lookup, not in itemList");
             All.Sort((x, y) =>
             {
                 int c = TypeRank(x.Type).CompareTo(TypeRank(y.Type));
@@ -66,6 +58,30 @@ namespace SpawnMenu
             _builtFrom = count;
             _builtVersion = ver;
             SLog.Info($"Item list built: {All.Count} items ({All.Count(e => e.ModGuid.Length > 0)} from mods, {All.Count(e => e.Hidden)} hidden).");
+        }
+
+        static bool Add(ItemAttr a, HashSet<int> seen)
+        {
+            if (a == null) return false;
+            try
+            {
+                if (a.isMissingMod) return false;
+                if (!seen.Add(a.itemId)) return false;
+                var e = new Entry
+                {
+                    Attr = a,
+                    Id = a.itemId,
+                    Name = NameOf(a),
+                    Type = a.itemType,
+                    ModGuid = a.modGuid ?? "",
+                    Stack = Math.Max(1, a.stackNumber),
+                    Hidden = a.hiddenItem,
+                };
+                e.Lower = e.Name.ToLowerInvariant();
+                All.Add(e);
+                return true;
+            }
+            catch (Exception ex) { SLog.Debug($"Skipped an item while listing: {ex.Message}"); return false; }
         }
 
         internal static string NameOf(ItemAttr a)
