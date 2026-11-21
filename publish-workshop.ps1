@@ -87,23 +87,57 @@ $Vdf = Join-Path $Dist "workshop_item.vdf"
 [System.IO.File]::WriteAllText($Vdf, ($lines -join "`r`n"), (New-Object System.Text.UTF8Encoding($false)))
 
 # ---- 4. upload
+# Success is checked against Steam itself: the item's "last updated" time must move.
+# (The old check looked for the item id in the VDF, which is always there for an existing
+#  item, so a failed upload still printed "Done".)
+function Get-ItemUpdated([string]$itemId) {
+    # Public Steam Web API, no key needed. Returns the item's last-update time, or 0 if unknown.
+    try {
+        $r = Invoke-RestMethod -Method Post -Uri "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/" `
+            -Body @{ itemcount = 1; "publishedfileids[0]" = $itemId } -TimeoutSec 20
+        return [long]$r.response.publishedfiledetails[0].time_updated
+    } catch { return 0 }
+}
+$before = 0
 if ($isNew) { Write-Host "==> Creating a new Workshop item ($Visibility)" -ForegroundColor Cyan }
-else        { Write-Host "==> Updating Workshop item $Id" -ForegroundColor Cyan }
-& $SteamCmd +login $SteamUser +workshop_build_item $Vdf +quit
+else {
+    $before = Get-ItemUpdated $Id
+    $when = if ($before -gt 0) { [DateTimeOffset]::FromUnixTimeSeconds($before).LocalDateTime.ToString("yyyy-MM-dd HH:mm") } else { "unknown" }
+    Write-Host "==> Updating Workshop item $Id (last updated on Steam: $when)" -ForegroundColor Cyan
+}
+& $SteamCmd +login $SteamUser +workshop_build_item $Vdf +quit | Tee-Object -Variable steamOut
+$steamText = ($steamOut | Out-String)
 
-# SteamCMD writes the item id back into the VDF after a successful upload.
 $after = Get-Content $Vdf -Raw
-if ($after -match '"publishedfileid"\s+"(\d+)"' -and $Matches[1] -ne "0") {
-    $newId = $Matches[1]
+$newId = $null
+if ($after -match '"publishedfileid"\s+"(\d+)"' -and $Matches[1] -ne "0") { $newId = $Matches[1] }
+
+$ok = $false; $how = ""
+if ($newId) {
+    # Steam can take a few seconds to show the new time.
+    for ($i = 0; $i -lt 6 -and -not $ok; $i++) {
+        $now = Get-ItemUpdated $newId
+        if ($now -gt 0 -and $now -gt $before) { $ok = $true; $how = "Steam shows the item updated at " + [DateTimeOffset]::FromUnixTimeSeconds($now).LocalDateTime.ToString("HH:mm:ss") }
+        elseif ($now -eq 0) { break }   # private item or API down: can't check this way
+        else { Start-Sleep -Seconds 5 }
+    }
+    if (-not $ok -and $now -eq 0 -and $steamText -match 'Success' -and $steamText -notmatch 'ERROR|FAILED|Login Failure|Access Denied') {
+        $ok = $true; $how = "SteamCMD reported Success (Steam's API couldn't confirm it, e.g. the item is private)"
+    }
+}
+
+if ($ok) {
     if ($isNew) {
         Set-Content -Path $IdFile -Value $newId -Encoding ASCII
         Write-Host "    saved item id to workshop\publishedfileid.txt - commit it" -ForegroundColor Yellow
     }
     Write-Host ""
-    Write-Host " Done: https://steamcommunity.com/sharedfiles/filedetails/?id=$newId" -ForegroundColor Green
+    Write-Host " Done: SpawnMenu $Version is on the Workshop. $how" -ForegroundColor Green
+    Write-Host " https://steamcommunity.com/sharedfiles/filedetails/?id=$newId" -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host " Upload did not finish - read the SteamCMD output above." -ForegroundColor Red
-    Write-Host " (First time: accept the Workshop agreement on the Steam website if it asks.)" -ForegroundColor Red
+    Write-Host " Upload FAILED - the Workshop item did not change. Read the SteamCMD output above." -ForegroundColor Red
+    Write-Host " If it shows a login error, Steam Guard prompt or 'Access Denied', log in once and rerun this script:" -ForegroundColor Red
+    Write-Host "   & `"$SteamCmd`" +login $SteamUser +quit" -ForegroundColor Yellow
     exit 1
 }
