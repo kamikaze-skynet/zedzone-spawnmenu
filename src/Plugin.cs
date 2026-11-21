@@ -12,13 +12,14 @@ namespace SpawnMenu
     public class Plugin : BasePlugin
     {
         public const string Guid = "girthy_mods.zedzone.spawnmenu";
-        public const string Version = "1.4.2";
+        public const string Version = "1.4.3";
 
         internal static ConfigEntry<KeyCode> MenuKey;
         internal static ConfigEntry<float> UiScale;
         internal static ConfigEntry<bool> ShowHiddenItems;
         internal static ConfigEntry<bool> FillMagazines;
         internal static ConfigEntry<int> MaxPerClick;
+        internal static ConfigEntry<string> MenuFont;
         internal static ConfigEntry<bool> VerboseLog;
 
         public override void Load()
@@ -33,6 +34,8 @@ namespace SpawnMenu
                 "Kits with a 'fillmags' line load their magazines from the ammo in the kit.");
             MaxPerClick = Config.Bind("Items", "MaxPerClick", 100,
                 "Most separate items one click can spawn (guns, clothes and other items that don't stack). Stops a typo from flooding the world.");
+            MenuFont = Config.Bind("Display", "MenuFont", "auto",
+                "Font for the menu. auto = Unity's default, or the game's own UI font when item names have Chinese / Japanese / Korean (or other) characters the default font can't show. default = always Unity's font. Or the name of a font the game has loaded (the log lists them).");
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Extra detail in BepInEx\\SpawnMenu.log.");
 
             SLog.Verbose = VerboseLog.Value;

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.3
+- Fix: Chinese (and Japanese / Korean) item names showed as garbage, because Unity's default menu font has no such characters. When the item names need it, the menu now draws with the game's own UI font, which does. New setting `MenuFont` (auto / default / a font name). The log says which font was picked.
+
 ## 1.4.2
 - When the Tank or Helicopter mod was built for an older version of the game (as happened after the game update of 2026-11-19), the kit now says so plainly instead of showing a "Method not found" error. The fix for that is updating the Tank / Helicopter mod, not Spawn Menu.
 

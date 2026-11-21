@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Key = UnityEngine.InputSystem.Key;
 
@@ -46,8 +47,15 @@ namespace SpawnMenu
             _open = true;
             Catalog.Refresh();
             Kits.Load();
+            PickFont();
             _dirty = true;
             SLog.Debug("Menu opened");
+        }
+
+        static void PickFont()
+        {
+            try { Fonts.Choose(Catalog.All.Select(e => e.Name).Concat(Kits.List.Select(k => k.Name))); }
+            catch (Exception e) { SLog.Error("Choosing a font failed", e); }
         }
 
         static void Status(string s) { _status = s; _statusUntil = Time.unscaledTime + 6f; }
@@ -93,7 +101,7 @@ namespace SpawnMenu
             for (int i = 0; i < _kitRects.Count && i < Kits.List.Count; i++) if (_kitRects[i].Contains(m)) { Status(Kits.Give(Kits.List[i])); return; }
             if (_btnFill.Contains(m)) { var mags = Spawner.MagazinesOnPlayer(); int f = Spawner.FillMagazines(mags); Status($"Loaded {f} of {mags.Count} magazines from the ammo you carry"); return; }
             if (_btnDump.Contains(m)) { try { Status("Saved to " + Catalog.Dump()); } catch (Exception e) { SLog.Error("Dump failed", e); Status("Couldn't save the list, see SpawnMenu.log"); } return; }
-            if (_btnReload.Contains(m)) { Kits.Load(); Catalog.Refresh(true); _dirty = true; Rebuild(); Status($"Reloaded: {Kits.List.Count} kits, {Catalog.All.Count} items"); return; }
+            if (_btnReload.Contains(m)) { Kits.Load(); Catalog.Refresh(true); PickFont(); _dirty = true; Rebuild(); Status($"Reloaded: {Kits.List.Count} kits, {Catalog.All.Count} items"); return; }
             if (_btnClose.Contains(m)) { Close(); return; }
             if (_list.Contains(m))
             {
@@ -198,11 +206,15 @@ namespace SpawnMenu
             Layout();
             var skin = GUI.skin;
             int oldLabel = skin.label.fontSize, oldBox = skin.box.fontSize, oldButton = skin.button.fontSize;
+            var oldFont = skin.font;
+            bool fontSet = false;
             var oldAlign = skin.label.alignment;
             try
             {
                 int fs = Mathf.RoundToInt(14f * S);
                 skin.label.fontSize = fs; skin.box.fontSize = fs; skin.button.fontSize = fs;
+                var font = Fonts.Current;
+                if (font != null) { skin.font = font; fontSet = true; }
                 Vector2 m = In.MouseGui();
 
                 GUI.Box(_win, ""); GUI.Box(_win, ""); GUI.Box(_win, "");   // stacked for a darker backing
@@ -262,6 +274,7 @@ namespace SpawnMenu
             finally
             {
                 skin.label.fontSize = oldLabel; skin.box.fontSize = oldBox; skin.button.fontSize = oldButton;
+                if (fontSet) skin.font = oldFont;
                 skin.label.alignment = oldAlign;
             }
         }

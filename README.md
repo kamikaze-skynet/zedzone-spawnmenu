@@ -60,7 +60,7 @@ Each line is `<item> <count>`, where `<item>` is a numeric item id, `mod:<modGui
 
 ## Settings
 
-`BepInEx\config\girthy_mods.zedzone.spawnmenu.cfg`: `OpenMenuKey` (Insert), `UiScale`, `ListGameHiddenItems`, `MaxPerClick`, `FillMagazines`, `VerboseLog`.
+`BepInEx\config\girthy_mods.zedzone.spawnmenu.cfg`: `OpenMenuKey` (Insert), `UiScale`, `MenuFont`, `ListGameHiddenItems`, `MaxPerClick`, `FillMagazines`, `VerboseLog`.
 
 Log: `BepInEx\SpawnMenu.log`.
 
